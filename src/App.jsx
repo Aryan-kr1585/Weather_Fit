@@ -1,121 +1,92 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [city, setCity] = useState("");
+  const [weatherList, setWeatherList] = useState([]);
+
+  const [sort, setSort] = useState("default");
+  const [minTemp, setMinTemp] = useState(0);
+
+  const API_KEY = "6e628b6782a96e14b252308972caf801";
+
+  const getWeather = async () => {
+    if (!city) return;
+
+    try {
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data && data.main) {
+        setWeatherList((prev) => [...prev, data]);
+        setCity("");
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // Filter (temperature)
+  const filtered = weatherList.filter(
+    (item) => item.main.temp >= minTemp
+  );
+
+  // Sort
+  const sorted = [...filtered].sort((a, b) => {
+    if (sort === "temp") return b.main.temp - a.main.temp;
+    if (sort === "name") return a.name.localeCompare(b.name);
+    return 0;
+  });
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="container">
+      <h1>🌦 Weather App</h1>
 
-      <div className="ticks"></div>
+      {/* Search */}
+      <div className="controls">
+        <input
+          type="text"
+          placeholder="Enter city..."
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+        />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        <button onClick={getWeather}>Search</button>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {/* Sort */}
+        <select onChange={(e) => setSort(e.target.value)}>
+          <option value="default">Sort</option>
+          <option value="temp">By Temp</option>
+          <option value="name">A-Z</option>
+        </select>
+
+        {/* Filter */}
+        <select onChange={(e) => setMinTemp(Number(e.target.value))}>
+          <option value="0">All Temps</option>
+          <option value="20">20°C+</option>
+          <option value="30">30°C+</option>
+        </select>
+      </div>
+
+      {/* Cards */}
+      <div className="grid">
+        {sorted.map((item, index) => (
+          <div key={index} className="card">
+            <h2>{item.name}</h2>
+            <p>🌡 {item.main.temp} °C</p>
+            <p>☁️ {item.weather[0].main}</p>
+
+            <img
+              src={`https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png`}
+              alt="weather"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;
